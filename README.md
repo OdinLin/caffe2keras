@@ -5,6 +5,7 @@ It is inspired by:
 - keras's caffe branch
 - https://github.com/pfnet/chainer/blob/master/chainer/functions/caffe (functions and examples)
 - https://gist.github.com/baraldilorenzo (VGG16 model for Keras)
+- https://github.com/mitmul/chainer-imagenet-vgg
 
 Example:
 
