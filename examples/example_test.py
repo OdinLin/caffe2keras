@@ -49,6 +49,11 @@ class TestProto2Keras(unittest.TestCase):
 
     def test_proto_2_keras(self):
         model = self.p2k.model
+        sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
+        model.compile(loss='categorical_crossentropy', optimizer=sgd)
+        # custom fit
+        # model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epoch, show_accuracy=True, callbacks=[remote])
+
         # test part
         im = cv2.resize(cv2.imread('Cats.jpg'), (224, 224))
         im = im.transpose((2, 0, 1))
