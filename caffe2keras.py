@@ -335,21 +335,21 @@ class Proto2Keras(object):
 
 
 def _get_ksize(param):
-    if param.kernel_h > 0:
+    if param.kernel_h > 0 and param.kernel_w > 0:
         return param.kernel_h, param.kernel_w
     else:
         return param.kernel_size, param.kernel_size
 
 
 def _get_stride(param):
-    if param.stride_h > 0:
+    if param.stride_h > 0 and param.stride_w > 0:
         return param.stride_h, param.stride_w
     else:
         return param.stride, param.stride
 
 
 def _get_pad(param):
-    if param.pad_h > 0:
+    if param.pad_h > 0 and param.pad_w > 0:
         return param.pad_h, param.pad_w
     else:
         return param.pad, param.pad
