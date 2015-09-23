@@ -18,24 +18,21 @@ import cStringIO as StringIO
 import urllib
 import exifutil
 
-from caffe2keras.caffe2keras import Model2Keras
-import vgg_16_keras
+from caffe2keras.caffeloader import CaffeLoader
 
 prototxt = '/mnt/share/projects/keras_test/chainer-imagenet-vgg-master/VGG_ILSVRC_16_layers_deploy.prototxt'
 model_file = '/mnt/share/projects/keras_test/chainer-imagenet-vgg-master/VGG_ILSVRC_16_layers.caffemodel'
 
-model = vgg_16_keras.VGG_16()
-#
-
+cl = CaffeLoader(prototxt_path=prototxt, caffemodel_path=model_file)
+model = cl.load()
+sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
+model.compile(optimizer=sgd, loss='categorical_crossentropy')
 
 UPLOAD_FOLDER = '/tmp/keras_demos_uploads'
 ALLOWED_IMAGE_EXTENSIONS = set(['png', 'bmp', 'jpg', 'jpe', 'jpeg', 'gif'])
 
 # Obtain the flask app object
 app = flask.Flask(__name__)
-
-m2k = Model2Keras(model, prototxt, model_file)
-m2k.load_caffe_params()
 
 
 @app.route('/')
@@ -64,6 +61,7 @@ def classify_url():
     result = app.clf.classify_image(image)
     return flask.render_template(
         'index.html', has_result=True, result=result, imagesrc=imageurl)
+
 
 def classify_image2(image):
     starttime = time.time()

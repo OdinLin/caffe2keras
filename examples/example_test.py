@@ -4,9 +4,10 @@ import numpy as np
 import os
 import cv2
 
-from keras.datasets.data_utils import get_file
+# from keras.datasets.data_utils import get_file
 from caffe2keras.caffe2keras import Model2Keras
 from caffe2keras.caffe2keras import Proto2Keras
+from caffe2keras.caffeloader import CaffeLoader
 import vgg_16_keras
 
 prototxt = '/mnt/share/projects/keras_test/chainer-imagenet-vgg-master/VGG_ILSVRC_16_layers_deploy.prototxt'
@@ -16,7 +17,7 @@ model = vgg_16_keras.VGG_16()
 
 
 class TestAll(unittest.TestCase):
-    def testaaaa(self):
+    def old_use(self):
         p2k = Proto2Keras(prototxt)
         keras_model = p2k.model
         m2k = Model2Keras(keras_model, prototxt, model_file)
@@ -40,6 +41,27 @@ class TestAll(unittest.TestCase):
         for w, p in zip(words[top5], probs):
             print('{}\tprobability:{}'.format(w, p))
 
+    def new_use(self):
+        cl = CaffeLoader(prototxt_path=prototxt, caffemodel_path=model_file)
+        model = cl.load()
+        im = cv2.resize(cv2.imread('Cats.jpg'), (224, 224))
+        im = im.transpose((2, 0, 1))
+        im = np.expand_dims(im, axis=0)
+
+        # Test pretrained model
+        sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
+        model.compile(optimizer=sgd, loss='categorical_crossentropy')
+
+        out = model.predict(im)
+        top5 = np.argsort(out)[0][::-1][:5]
+        probs = np.sort(out)[0][::-1][:5]
+        print 'yes'
+        words = open('synset_words.txt').readlines()
+        words = [(w[0], ' '.join(w[1:])) for w in [w.split() for w in words]]
+        words = np.asarray(words)
+
+        for w, p in zip(words[top5], probs):
+            print('{}\tprobability:{}'.format(w, p))
 
 
 class TestModel2Keras(unittest.TestCase):
