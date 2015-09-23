@@ -77,6 +77,7 @@ class Model2Keras(object):
             for i in range(len(weights_layers)):
                 print 'model shapes: ', params[i][0].data.shape, 'and', params[i][1].data.shape
                 if weights_layers[i].get_config()['name'] is 'Dense':
+                    print 'weights: ', params[i][0].data.T[0][0]
                     weights_layers[i].set_weights([params[i][0].data.T, params[i][1].data])
                 elif weights_layers[i].get_config()['name'] is 'Convolution2D':
                     w_weights = params[i][0].data

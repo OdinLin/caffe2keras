@@ -3,8 +3,10 @@ import time
 import cPickle
 import datetime
 import logging
+import cv2
 import flask
 import sys
+from keras.optimizers import SGD
 import werkzeug
 import optparse
 import tornado.wsgi
@@ -23,15 +25,17 @@ prototxt = '/mnt/share/projects/keras_test/chainer-imagenet-vgg-master/VGG_ILSVR
 model_file = '/mnt/share/projects/keras_test/chainer-imagenet-vgg-master/VGG_ILSVRC_16_layers.caffemodel'
 
 model = vgg_16_keras.VGG_16()
+#
 
-m2k = Model2Keras(model, prototxt, model_file)
-m2k.load_caffe_params()
 
 UPLOAD_FOLDER = '/tmp/keras_demos_uploads'
 ALLOWED_IMAGE_EXTENSIONS = set(['png', 'bmp', 'jpg', 'jpe', 'jpeg', 'gif'])
 
 # Obtain the flask app object
 app = flask.Flask(__name__)
+
+m2k = Model2Keras(model, prototxt, model_file)
+m2k.load_caffe_params()
 
 
 @app.route('/')
@@ -61,6 +65,65 @@ def classify_url():
     return flask.render_template(
         'index.html', has_result=True, result=result, imagesrc=imageurl)
 
+def classify_image2(image):
+    starttime = time.time()
+    im = cv2.resize(cv2.imread(image), (224, 224))
+    im = im.transpose((2, 0, 1))
+    im = np.expand_dims(im, axis=0)
+
+    # Test pretrained model
+    sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
+    model.compile(optimizer=sgd, loss='categorical_crossentropy')
+
+    out = model.predict(im)
+    endtime = time.time()
+    top5 = np.argsort(out)[0][::-1][:5]
+    probs = np.sort(out)[0][::-1][:5]
+    print 'yes'
+    words = open('synset_words.txt').readlines()
+    words = [(w[0], ' '.join(w[1:])) for w in [w.split() for w in words]]
+    words = np.asarray(words)
+
+    for w, p in zip(words[top5], probs):
+        print('{}\tprobability:{}'.format(w, p))
+
+    meta = [
+        (w, p)
+        for w, p in zip(words[top5], probs)
+    ]
+    bet_result = [
+        (w, p)
+        for w, p in zip(words[top5], probs)
+    ]
+
+    return True, meta, bet_result, '%.3f' % (endtime - starttime)
+
+@app.route('/classify_upload2', methods=['POST'])
+def classify_upload2():
+    try:
+        # We will save the file to disk for possible data collection.
+        imagefile = flask.request.files['imagefile']
+        filename_ = str(datetime.datetime.now()).replace(' ', '_') + \
+            werkzeug.secure_filename(imagefile.filename)
+        filename = os.path.join(UPLOAD_FOLDER, filename_)
+        imagefile.save(filename)
+        logging.info('Saving to %s.', filename)
+        # image = exifutil.open_oriented_im(filename)
+
+    except Exception as err:
+        logging.info('Uploaded image open error: %s', err)
+        return flask.render_template(
+            'index.html', has_result=True,
+            result=(False, 'Cannot open uploaded image.')
+        )
+
+    result = classify_image2(filename)
+    # result = (True, 1,2,3)
+    return flask.render_template(
+        'index.html', has_result=True, result=None,
+        imagesrc=embed_image_html(image)
+    )
+
 
 @app.route('/classify_upload', methods=['POST'])
 def classify_upload():
@@ -82,8 +145,9 @@ def classify_upload():
         )
 
     result = app.clf.classify_image(image)
+    # result = (True, 1,2,3)
     return flask.render_template(
-        'index.html', has_result=True, result=result,
+        'index.html', has_result=True, result=None,
         imagesrc=embed_image_html(image)
     )
 
@@ -154,6 +218,8 @@ class ImagenetClassifier(object):
         # We could use better psychological models here...
         self.bet['infogain'] -= np.array(self.bet['preferences']) * 0.1
 
+
+
     def classify_image(self, image):
         try:
             starttime = time.time()
@@ -217,7 +283,7 @@ def start_from_terminal(app):
         action='store_true', default=False)
 
     opts, args = parser.parse_args()
-    # ImagenetClassifier.default_args.update({'gpu_mode': opts.gpu})
+    ImagenetClassifier.default_args.update({'gpu_mode': opts.gpu})
     #
     #
     # app.clf = ImagenetClassifier(**ImagenetClassifier.default_args)
@@ -227,6 +293,8 @@ def start_from_terminal(app):
         app.run(debug=True, host='0.0.0.0', port=opts.port)
     else:
         start_tornado(app, opts.port)
+
+
 
 
 if __name__ == '__main__':
