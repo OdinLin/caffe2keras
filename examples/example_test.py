@@ -13,11 +13,14 @@ import vgg_16_keras
 prototxt = '/mnt/share/projects/keras_test/chainer-imagenet-vgg-master/VGG_ILSVRC_16_layers_deploy.prototxt'
 model_file = '/mnt/share/projects/keras_test/chainer-imagenet-vgg-master/VGG_ILSVRC_16_layers.caffemodel'
 
+prototxt_19 = '/mnt/share/projects/keras_test/chainer-imagenet-vgg-master/VGG_ILSVRC_19_layers_deploy.prototxt'
+model_file_19 = '/mnt/share/projects/keras_test/chainer-imagenet-vgg-master/VGG_ILSVRC_19_layers.caffemodel'
+
 model = vgg_16_keras.VGG_16()
 
 
-class TestAll(unittest.TestCase):
-    def old_use(self):
+class TestCaffeLoader(unittest.TestCase):
+    def old_fun_use(self):
         p2k = Proto2Keras(prototxt)
         keras_model = p2k.model
         m2k = Model2Keras(keras_model, prototxt, model_file)
@@ -41,8 +44,9 @@ class TestAll(unittest.TestCase):
         for w, p in zip(words[top5], probs):
             print('{}\tprobability:{}'.format(w, p))
 
-    def new_use(self):
-        cl = CaffeLoader(prototxt_path=prototxt, caffemodel_path=model_file)
+    def new_fun_use(self):
+        print 'new_fun_use'
+        cl = CaffeLoader(prototxt_path=prototxt_19, caffemodel_path=model_file_19)
         model = cl.load()
         im = cv2.resize(cv2.imread('Cats.jpg'), (224, 224))
         im = im.transpose((2, 0, 1))
