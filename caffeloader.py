@@ -85,7 +85,7 @@ class CaffeLoader(object):
 
     def _save_weights(self, h5py_save_dir):
 
-        net = caffe.Net(self.prototxt_path, self.prototxt_path, caffe.TEST)
+        net = caffe.Net(self.prototxt_path, self.caffemodel_path, caffe.TEST)
         f = h5py.File(h5py_save_dir, 'w')
 
         params_index = 0
